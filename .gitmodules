@@ -1,12 +1,12 @@
 [submodule "tools/ape/ape-bin"]
 	path = tools/ape/ape-bin
-	url = git@github.com:the-themis-benchmarks/ape-bin.git
+	url = https://github.com/the-themis-benchmarks/ape-bin.git
 [submodule "tools/fastbot/Fastbot_Android"]
 	path = tools/fastbot/Fastbot_Android
-	url = git@github.com:bytedance/Fastbot_Android.git
+	url = https://github.com/bytedance/Fastbot_Android.git
 [submodule "tools/humanoid/Humanoid"]
 	path = tools/humanoid/Humanoid
-	url = git@github.com:the-themis-benchmarks/Humanoid.git
+	url = https://github.com/the-themis-benchmarks/Humanoid.git
 [submodule "tools/stoat/Stoat"]
 	path = tools/stoat/Stoat
-	url = git@github.com:tingsu/Stoat.git
+	url = https://github.com/tingsu/Stoat.git
