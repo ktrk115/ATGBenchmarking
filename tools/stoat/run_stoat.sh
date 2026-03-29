@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 APK_FILE=$1 # e.g., xx.apk
 OUTPUT_DIR=$2
@@ -32,10 +33,17 @@ cd $TOOL_DIR
 avd_port=${AVD_SERIAL:9:13}
 base_num=3554
 stoat_port="$(($avd_port-$base_num))"
-ruby run_stoat_testing.rb --app_dir $result_dir --apk_path $APK_FILE --avd_port $avd_port --stoat_port $stoat_port --model_time 1h --mcmc_time 5h --project_type gradle 2>&1 | tee $result_dir/stoat.log
+# Split TEST_TIME into model_time (1/6) and mcmc_time (5/6) with 1:5 ratio
+MODEL_TIME=$(($TEST_TIME / 6))s
+MCMC_TIME=$(($TEST_TIME - $TEST_TIME / 6))s
+# Wrap the entire pipeline in timeout so it kills the whole process group,
+# including ruby's forked children (stoat server, rec.rb, etc.)
+tool_exit=0
+timeout --kill-after=10 $TEST_TIME bash -c "ruby run_stoat_testing.rb --app_dir $result_dir --apk_path $APK_FILE --avd_port $avd_port --stoat_port $stoat_port --model_time $MODEL_TIME --mcmc_time $MCMC_TIME --project_type gradle 2>&1 | tee $result_dir/stoat.log" || tool_exit=$?
 cd $current_dir
 ../base/log_time.sh $result_dir $TOOL_NAME $AVD_SERIAL
 
 ../base/stop_emulator.sh $AVD_SERIAL
 
 echo "@@@@@@ Finish (${AVD_SERIAL}): " $app_package_name "@@@@@@@"
+exit $tool_exit
