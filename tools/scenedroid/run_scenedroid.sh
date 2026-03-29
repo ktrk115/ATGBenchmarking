@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 APK_FILE=$1 # e.g., xx.apk
 OUTPUT_DIR=$2
@@ -30,10 +31,12 @@ echo "** CREATING RESULT DIR (${AVD_SERIAL}): " $result_dir
 echo "** RUN SceneDroid (${AVD_SERIAL})"
 ../base/log_time.sh $result_dir $TOOL_NAME $AVD_SERIAL
 cd $TOOL_DIR
-python3 main_ATGEmpirical.py --apk_file $APK_FILE --result $result_dir --timeout $TEST_TIME --emulator_name $AVD_SERIAL 2>&1 | tee $result_dir/scenedroid.log
+tool_exit=0
+python3 main_ATGEmpirical.py --apk_file $APK_FILE --result $result_dir --timeout $TEST_TIME --emulator_name $AVD_SERIAL 2>&1 | tee $result_dir/scenedroid.log || tool_exit=$?
 cd $current_dir
 ../base/log_time.sh $result_dir $TOOL_NAME $AVD_SERIAL
 
 ../base/stop_emulator.sh $AVD_SERIAL
 
 echo "@@@@@@ Finish (${AVD_SERIAL}): " $app_package_name "@@@@@@@"
+exit $tool_exit

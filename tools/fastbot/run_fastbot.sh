@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 APK_FILE=$1 # e.g., xx.apk
 OUTPUT_DIR=$2
@@ -64,9 +65,13 @@ pull_fastbot_results &
 # run fastbot
 echo "** RUN FASTBOT (${AVD_SERIAL})"
 ../base/log_time.sh $result_dir $TOOL_NAME $AVD_SERIAL
-timeout $TEST_TIME adb -s $AVD_SERIAL shell CLASSPATH=/sdcard/monkeyq.jar:/sdcard/framework.jar:/sdcard/fastbot-thirdpart.jar exec app_process /system/bin com.android.commands.monkey.Monkey -p $app_package_name --agent robot --running-minutes $TEST_TIME --throttle 200 -v -v --output-directory /sdcard/log --bugreport 1000000 2>&1 | tee $result_dir/fastbot.log
+tool_exit=0
+timeout $TEST_TIME adb -s $AVD_SERIAL shell CLASSPATH=/sdcard/monkeyq.jar:/sdcard/framework.jar:/sdcard/fastbot-thirdpart.jar exec app_process /system/bin com.android.commands.monkey.Monkey -p $app_package_name --agent robot --running-minutes $TEST_TIME --throttle 200 -v -v --output-directory /sdcard/log --bugreport 1000000 2>&1 | tee $result_dir/fastbot.log || tool_exit=$?
 ../base/log_time.sh $result_dir $TOOL_NAME $AVD_SERIAL
+
+kill %1 2>/dev/null || true
 
 ../base/stop_emulator.sh $AVD_SERIAL
 
 echo "@@@@@@ Finish (${AVD_SERIAL}): " $app_package_name "@@@@@@@"
+exit $tool_exit

@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 APK_FILE=$1 # e.g., xx.apk
 OUTPUT_DIR=$2
@@ -30,7 +31,7 @@ config_file=$TOOL_DIR/"Config_"${apk_file_name%.apk}-${AVD_SERIAL}".txt"
 rm -rf $config_file
 touch $config_file
 echo "[Path]" >> $config_file
-real_path_of_qtesting=`realpath $TOOL_DIR`
+real_path_of_qtesting=$(realpath $TOOL_DIR)
 echo "Benchmark = ${real_path_of_qtesting}/subjects/" >> $config_file
 unique_apk_file_name=$AVD_SERIAL-${apk_file_name%.*}".apk"
 mkdir -p $TOOL_DIR/subjects
@@ -56,8 +57,9 @@ rm -rf ${real_path_of_qtesting}/subjects/"${AVD_SERIAL}*"
 echo "** RUN Q-testing (${AVD_SERIAL})"
 adb -s $AVD_SERIAL shell date "+%Y-%m-%d-%H:%M:%S" >> $result_dir/qtesting_testing_time_on_emulator.txt
 cd ${TOOL_DIR} || exit
-config_file_name=`basename $config_file`
-timeout $TEST_TIME ${TOOL_DIR}/main -r $config_file_name > $result_dir/q-testing.log 2>&1 # ensure the program can normally exit
+config_file_name=$(basename $config_file)
+tool_exit=0
+timeout $TEST_TIME ${TOOL_DIR}/main -r $config_file_name > $result_dir/q-testing.log 2>&1 || tool_exit=$?
 # add an additional package: -p com.android.camera
 adb -s $AVD_SERIAL shell date "+%Y-%m-%d-%H:%M:%S" >> $result_dir/qtesting_testing_time_on_emulator.txt
 
@@ -67,3 +69,4 @@ echo "** STOP Q-testing (${AVD_SERIAL})"
 ../base/stop_emulator.sh $AVD_SERIAL
 
 echo "@@@@@@ Finish (${AVD_SERIAL}): " $app_package_name "@@@@@@@"
+exit $tool_exit

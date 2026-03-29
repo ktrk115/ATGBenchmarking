@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 APK_FILE=$1 # e.g., xx.apk
 OUTPUT_DIR=$2
@@ -27,13 +28,15 @@ echo "** CREATING RESULT DIR (${AVD_SERIAL}): " $result_dir
 # run monkey
 echo "** RUN MONKEY (${AVD_SERIAL})"
 ../base/log_time.sh $result_dir $TOOL_NAME $AVD_SERIAL
-timeout $TEST_TIME adb -s $AVD_SERIAL shell monkey -p $app_package_name -v --throttle 200 --ignore-crashes --ignore-timeouts --ignore-security-exceptions --bugreport 1000000 2>&1 | tee $result_dir/monkey.log
+tool_exit=0
+timeout $TEST_TIME adb -s $AVD_SERIAL shell monkey -p $app_package_name -v --throttle 200 --ignore-crashes --ignore-timeouts --ignore-security-exceptions --bugreport 1000000 2>&1 | tee $result_dir/monkey.log || tool_exit=$?
 ../base/log_time.sh $result_dir $TOOL_NAME $AVD_SERIAL
 
 # stop monkey
 echo "** STOP MONKEY (${AVD_SERIAL})"
-adb -s $AVD_SERIAL shell kill `adb -s $AVD_SERIAL shell ps | grep 'monkey' | awk '{print $2}'`
+adb -s $AVD_SERIAL shell kill $(adb -s $AVD_SERIAL shell ps | grep 'monkey' | awk '{print $2}') || true
 
 ../base/stop_emulator.sh $AVD_SERIAL
 
 echo "@@@@@@ Finish (${AVD_SERIAL}): " $app_package_name "@@@@@@@"
+exit $tool_exit

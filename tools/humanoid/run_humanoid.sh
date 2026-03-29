@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 APK_FILE=$1 # e.g., xx.apk
 OUTPUT_DIR=$2
@@ -28,7 +29,7 @@ export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 cd $TOOL_DIR
 pwd
-kill -9 $(lsof -t -i:50405)
+kill -9 $(lsof -t -i:50405) || true
 python3 agent.py -c config.json > $result_dir/agent_output.log 2>&1 &
 cd $current_dir
 
@@ -49,14 +50,19 @@ done
 # run humandroid
 echo "** RUN Humandroid (${AVD_SERIAL})"
 ../base/log_time.sh $result_dir $TOOL_NAME $AVD_SERIAL
-if [[ $LOGIN_SCRIPT != "" ]]
+tool_exit=0
+if [[ ${LOGIN_SCRIPT:-} != "" ]]
 then
-    timeout $TEST_TIME droidbot -d $AVD_SERIAL -a $APK_FILE -o $result_dir -timeout 21600 -count 100000 -keep_app -keep_env -random -policy dfs_greedy -humanoid localhost:50405 -grant_perm -is_emulator 2>&1 | tee $result_dir/humandroid.log
+    timeout $TEST_TIME droidbot -d $AVD_SERIAL -a $APK_FILE -o $result_dir -timeout 21600 -count 100000 -keep_app -keep_env -random -policy dfs_greedy -humanoid localhost:50405 -grant_perm -is_emulator 2>&1 | tee $result_dir/humandroid.log || tool_exit=$?
 else
-    timeout $TEST_TIME droidbot -d $AVD_SERIAL -a $APK_FILE -o $result_dir -timeout 21600 -count 100000 -random -policy dfs_greedy -humanoid localhost:50405 -grant_perm -is_emulator 2>&1 | tee $result_dir/humandroid.log
+    timeout $TEST_TIME droidbot -d $AVD_SERIAL -a $APK_FILE -o $result_dir -timeout 21600 -count 100000 -random -policy dfs_greedy -humanoid localhost:50405 -grant_perm -is_emulator 2>&1 | tee $result_dir/humandroid.log || tool_exit=$?
 fi
 ../base/log_time.sh $result_dir $TOOL_NAME $AVD_SERIAL
+
+# kill the agent
+kill $(lsof -t -i:50405) 2>/dev/null || true
 
 ../base/stop_emulator.sh $AVD_SERIAL
 
 echo "@@@@@@ Finish (${AVD_SERIAL}): " $app_package_name "@@@@@@@"
+exit $tool_exit

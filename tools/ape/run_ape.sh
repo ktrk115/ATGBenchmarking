@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 APK_FILE=$1 # e.g., xx.apk
 OUTPUT_DIR=$2
@@ -51,13 +52,17 @@ sleep 10
 # run Ape
 echo "** RUN APE (${AVD_SERIAL})"
 ../base/log_time.sh $result_dir $TOOL_NAME $AVD_SERIAL
-timeout $TEST_TIME adb -s $AVD_SERIAL shell CLASSPATH=/data/local/tmp/ape.jar /system/bin/app_process /data/local/tmp/ com.android.commands.monkey.Monkey -p $app_package_name --running-minutes 360 --ape sata 2>&1 | tee $result_dir/ape.log
+tool_exit=0
+timeout $TEST_TIME adb -s $AVD_SERIAL shell CLASSPATH=/data/local/tmp/ape.jar /system/bin/app_process /data/local/tmp/ com.android.commands.monkey.Monkey -p $app_package_name --running-minutes 360 --ape sata 2>&1 | tee $result_dir/ape.log || tool_exit=$?
 ../base/log_time.sh $result_dir $TOOL_NAME $AVD_SERIAL
 
 # pull Ape's results
 echo "** PULL APE RESULTS (${AVD_SERIAL})"
-adb -s $AVD_SERIAL pull /sdcard/sata-${app_package_name}-ape-sata-running-minutes-360 $result_dir/
+adb -s $AVD_SERIAL pull /sdcard/sata-${app_package_name}-ape-sata-running-minutes-360 $result_dir/ || true
+
+kill %1 2>/dev/null || true
 
 ../base/stop_emulator.sh $AVD_SERIAL
 
 echo "@@@@@@ Finish (${AVD_SERIAL}): " $app_package_name "@@@@@@@"
+exit $tool_exit
