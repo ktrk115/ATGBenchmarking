@@ -7,6 +7,6 @@
 [submodule "tools/humanoid/Humanoid"]
 	path = tools/humanoid/Humanoid
 	url = git@github.com:the-themis-benchmarks/Humanoid.git
-[submodule "tools/scenedroid/SceneDroid"]
-	path = tools/scenedroid/SceneDroid
-	url = git@github.com:limerick1718/Exhau-SceId.git
+[submodule "tools/stoat/Stoat"]
+	path = tools/stoat/Stoat
+	url = git@github.com:tingsu/Stoat.git
