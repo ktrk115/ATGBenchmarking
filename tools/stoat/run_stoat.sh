@@ -34,8 +34,11 @@ avd_port=${AVD_SERIAL:9:13}
 base_num=3554
 stoat_port="$(($avd_port-$base_num))"
 # Split TEST_TIME into model_time (1/6) and mcmc_time (5/6) with 1:5 ratio
-MODEL_TIME=$(($TEST_TIME / 6))s
-MCMC_TIME=$(($TEST_TIME - $TEST_TIME / 6))s
+# Enforce a minimum of 60s for model_time so A3E has enough time to connect
+MODEL_TIME_RAW=$(($TEST_TIME / 6))
+if [ "$MODEL_TIME_RAW" -lt 60 ]; then MODEL_TIME_RAW=60; fi
+MODEL_TIME="${MODEL_TIME_RAW}s"
+MCMC_TIME="$(($TEST_TIME - $MODEL_TIME_RAW))s"
 # Wrap the entire pipeline in timeout so it kills the whole process group,
 # including ruby's forked children (stoat server, rec.rb, etc.)
 tool_exit=0
